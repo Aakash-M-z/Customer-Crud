@@ -163,10 +163,10 @@ async function save() {
     $("#email").addClass("is-valid");
   }
 
-  if (phone && !/^\d{10}$/.test(phone)) {
+  if (!phone || !/^\d{10}$/.test(phone)) {
     $("#phone").addClass("is-invalid");
     isValid = false;
-  } else if (phone) {
+  } else {
     $("#phone").addClass("is-valid");
   }
 
