@@ -11,9 +11,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
+// Health check endpoint for Railway
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.use("/", customerRoutes);
 
-app.listen(PORT, async () => {
+app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server running on port ${PORT}`);
-  await runMigrations();
+  try {
+    await runMigrations();
+    console.log("Database migrations applied successfully.");
+  } catch (err) {
+    console.error("Migration failed on startup:", err.message);
+    // App continues running even if migrations fail, avoiding crash
+  }
 });
