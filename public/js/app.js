@@ -7,6 +7,7 @@ $(document).ready(function () {
   load();
   createToastContainer();
   deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
+  applyFrontendPermissions();
 
   $("#confirmDeleteBtn").on("click", function () {
     if (customerToDelete) {
@@ -18,6 +19,44 @@ $(document).ready(function () {
     $(this).removeClass("is-invalid is-valid");
   });
 });
+
+// Fetch with authentication
+async function fetchWithAuth(url, options = {}) {
+  const token = localStorage.getItem('accessToken');
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (response.status === 401) {
+    localStorage.clear();
+    window.location.href = '/login.html';
+    return response;
+  }
+
+  return response;
+}
+
+// Apply permissions for UI elements
+function applyFrontendPermissions() {
+  const userString = localStorage.getItem('user');
+  if (!userString) {
+    window.location.href = '/login.html';
+    return;
+  }
+
+  const user = JSON.parse(userString);
+  const role = (user.role_name || user.role || '').toLowerCase();
+
+  // Hide "Add Customer" button if viewer
+  if (role === 'viewer') {
+    $("#addCustomerBtn").hide();
+  }
+}
 
 function createToastContainer() {
   if (!document.querySelector('.toast-container')) {
@@ -59,7 +98,11 @@ function load() {
   table = $("#table").DataTable({
     ajax: {
       url: "/getCustomers",
-      dataSrc: "data"
+      dataSrc: "data",
+      beforeSend: function (xhr) {
+        const token = localStorage.getItem('accessToken');
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
     },
     order: [[1, 'asc']],
     autoWidth: false,
@@ -90,16 +133,23 @@ function load() {
         orderable: false,
         width: "35%",
         render: function (data) {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          const role = (user.role_name || user.role || '').toLowerCase();
+          const canEdit = ['admin', 'manager'].includes(role);
+          const canDelete = role === 'admin';
+
           return `
             <button class='btn btn-sm btn-success rounded-pill me-2' onclick='view(${data.id})'>
               <i class='fas fa-eye me-1'></i>View
             </button>
+            ${canEdit ? `
             <button class='btn btn-sm btn-info rounded-pill me-2' onclick='edit(${data.id})'>
               <i class='fas fa-edit me-1'></i>Edit
-            </button>
+            </button>` : ''}
+            ${canDelete ? `
             <button class='btn btn-sm btn-danger rounded-pill' onclick='removeCustomer(${data.id})'>
               <i class='fas fa-trash me-1'></i>Delete
-            </button>
+            </button>` : ''}
           `;
         }
       }
@@ -125,7 +175,7 @@ function openForm() {
 }
 
 async function edit(id) {
-  const res = await fetch(`/api/customers/${id}`);
+  const res = await fetchWithAuth(`/api/customers/${id}`);
   const data = await res.json();
 
   $("#id").val(data.id);
@@ -191,9 +241,8 @@ async function save() {
   const url = id ? `/api/customers/${id}` : "/api/customers";
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithAuth(url, {
       method,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
 
@@ -228,7 +277,7 @@ async function removeCustomer(id) {
 
 async function confirmDelete(id) {
   try {
-    const response = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+    const response = await fetchWithAuth(`/api/customers/${id}`, { method: "DELETE" });
 
     if (response.ok) {
       deleteModal.hide();
@@ -244,7 +293,7 @@ async function confirmDelete(id) {
 }
 
 async function view(id) {
-  const res = await fetch(`/api/customers/${id}`);
+  const res = await fetchWithAuth(`/api/customers/${id}`);
   const data = await res.json();
 
   const viewContent = `
