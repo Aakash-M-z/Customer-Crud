@@ -1,30 +1,34 @@
-const express = require("express");
-const cors = require("cors");
+const app = require("./src/app");
+const envConfig = require("./src/config/env");
+const logger = require("./src/utils/logger");
 const runMigrations = require("./migrations/runner");
-const customerRoutes = require("./routes/customerRoutes");
-require("dotenv").config();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Connect to DB indirectly via src/config/db being required, though pool is initialized inherently when required.
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static("public"));
-
-// Health check endpoint for Railway
-app.get("/health", (req, res) => {
-  res.status(200).send("OK");
-});
-
-app.use("/", customerRoutes);
-
-app.listen(PORT, "0.0.0.0", async () => {
-  console.log(`Server running on port ${PORT}`);
+const startServer = async () => {
   try {
     await runMigrations();
-    console.log("Database migrations applied successfully.");
+    logger.info("Database migrations applied successfully");
   } catch (err) {
-    console.error("Migration failed on startup:", err.message);
-    // App continues running even if migrations fail, avoiding crash
+    logger.error("Migration failed on startup:", err);
+    // Continue but with warning
   }
+
+  app.listen(envConfig.port, "0.0.0.0", () => {
+    logger.info(`Server running on port ${envConfig.port} in ${envConfig.env} mode`);
+  });
+};
+
+startServer();
+
+process.on("unhandledRejection", (err) => {
+  logger.error("UNHANDLED REJECTION! 💥 Shutting down...");
+  logger.error(err.name, err.message);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  logger.error("UNCAUGHT EXCEPTION! 💥 Shutting down...");
+  logger.error(err.name, err.message);
+  process.exit(1);
 });

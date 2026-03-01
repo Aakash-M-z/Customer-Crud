@@ -10,16 +10,25 @@ body {
     min-height: 100vh;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.container-fluid {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .card {
     border: none;
     border-radius: 0;
-    overflow: hidden;
     background: #ffffff;
     transition: transform 0.3s ease;
     box-shadow: none;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-header {
@@ -39,6 +48,9 @@ body {
 
 .card-body {
     padding: 30px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .btn-primary {
@@ -57,11 +69,29 @@ body {
 
 .table-responsive {
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.dataTables_wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.dataTables_wrapper .dataTables_scroll {
+    flex: 1;
 }
 
 #table {
     margin-bottom: 0 !important;
+    width: 100% !important;
+}
+
+#table_wrapper {
+    width: 100%;
 }
 
 #table thead {

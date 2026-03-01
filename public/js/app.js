@@ -62,11 +62,14 @@ function load() {
       dataSrc: "data"
     },
     order: [[1, 'asc']],
+    autoWidth: false,
+    responsive: true,
     columns: [
       {
         data: "id",
         title: "S.No",
         orderable: false,
+        width: "60px",
         render: function (data, type, row, meta) {
           const allData = table ? table.rows({ order: 'applied' }).data().toArray() : [];
           const sortedIndex = allData.findIndex(r => r.id === row.id);
@@ -78,13 +81,14 @@ function load() {
         visible: false,
         searchable: false
       },
-      { data: "first_name", title: "First Name" },
-      { data: "last_name", title: "Last Name" },
-      { data: "email", title: "Email" },
+      { data: "first_name", title: "First Name", width: "15%" },
+      { data: "last_name", title: "Last Name", width: "15%" },
+      { data: "email", title: "Email", width: "25%" },
       {
         data: null,
         title: "Actions",
         orderable: false,
+        width: "35%",
         render: function (data) {
           return `
             <button class='btn btn-sm btn-success rounded-pill me-2' onclick='view(${data.id})'>

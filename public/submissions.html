@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Submission Management Dashboard - Track and manage submissions">
+  <title>Submission Management - Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/navigation.css">
+  <link rel="stylesheet" href="css/submissions.css">
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg admin-navbar">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" href="/">
+      <i class="fas fa-shield-alt"></i>
+      Admin Dashboard
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">
+            <i class="fas fa-users"></i>
+            Customers
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/submissions.html">
+            <i class="fas fa-clipboard-list"></i>
+            Submissions
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid p-0">
+  <div class="dashboard-card">
+    <div class="dashboard-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-0 header-title">
+          <i class="fas fa-clipboard-list me-2"></i>Submission Management
+        </h1>
+        <button class="btn btn-primary rounded-pill px-4" onclick="openSubmissionModal()">
+          <i class="fas fa-plus me-2"></i>New Submission
+        </button>
+      </div>
+    </div>
+
+    <div class="dashboard-body">
+      <div class="row mb-4" id="statsCards">
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon pending">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statPending">0</h3>
+              <p>Pending</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon in-progress">
+              <i class="fas fa-spinner"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statInProgress">0</h3>
+              <p>In Progress</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon approved">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statApproved">0</h3>
+              <p>Approved</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon rejected">
+              <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statRejected">0</h3>
+              <p>Rejected</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="filters-section mb-4">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <input type="text" class="form-control" id="searchInput" placeholder="Search by title or email...">
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" id="statusFilter">
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+              <i class="fas fa-redo me-2"></i>Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+      <div id="loadingState" class="loading-state" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading submissions...</p>
+      </div>
+
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <i class="fas fa-inbox fa-4x mb-3"></i>
+        <h3>No Submissions Found</h3>
+        <p>Create your first submission to get started</p>
+        <button class="btn btn-primary mt-3" onclick="openSubmissionModal()">
+          <i class="fas fa-plus me-2"></i>Create Submission
+        </button>
+      </div>
+
+      <div class="table-container" id="tableContainer" style="display: none;">
+        <table class="submissions-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Submitter Email</th>
+              <th>Status</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="submissionsTableBody">
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="submissionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">
+          <i class="fas fa-plus-circle me-2"></i>New Submission
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="submissionForm" novalidate>
+          <input type="hidden" id="submissionId">
+          
+          <div class="mb-3">
+            <label class="form-label" for="title">Title <span class="text-danger">*</span></label>
+            <input class="form-control" id="title" type="text" placeholder="Enter submission title" required>
+            <div class="invalid-feedback">Title is required</div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label" for="description">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="description" rows="4" placeholder="Enter detailed description" required></textarea>
+            <div class="invalid-feedback">Description is required</div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label" for="submitter_email">Submitter Email <span class="text-danger">*</span></label>
+            <input class="form-control" id="submitter_email" type="email" placeholder="Enter email address" required>
+            <div class="invalid-feedback">Valid email is required</div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label" for="status">Status</label>
+            <select class="form-select" id="status">
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveSubmission()">
+          <i class="fas fa-save me-2"></i>Save Submission
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-eye me-2"></i>Submission Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="viewModalBody">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Are you sure you want to delete this submission?</p>
+        <p class="text-danger mb-0"><strong>This action cannot be undone.</strong></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="fas fa-trash me-2"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/submissions.js"></script>
+</body>
+</html>
