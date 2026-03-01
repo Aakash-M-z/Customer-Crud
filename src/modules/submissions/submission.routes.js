@@ -2,6 +2,7 @@ const express = require("express");
 const { body, param } = require("express-validator");
 const { validate } = require("../../middlewares/validationMiddleware");
 const submissionController = require("./submission.controller");
+const { authenticate, authorize } = require("../../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -27,11 +28,25 @@ const idValidationRule = [
     param("id").isInt().withMessage("ID must be an integer")
 ];
 
-router.post("/", validate(submissionValidationRules), submissionController.createEntity);
+// All routes require authentication
+router.use(authenticate);
+
+// Create submission - user, manager, admin (NOT viewer)
+router.post("/", authorize("user", "manager", "admin"), validate(submissionValidationRules), submissionController.createEntity);
+
+// Get all submissions - all authenticated users can view
 router.get("/", submissionController.getAllEntities);
+
+// Get submission by ID - all authenticated users can view
 router.get("/:id", validate(idValidationRule), submissionController.getEntityById);
-router.put("/:id", validate([...idValidationRule, ...updateValidationRules]), submissionController.updateEntity);
-router.delete("/:id", validate(idValidationRule), submissionController.deleteEntity);
-router.patch("/:id/status", validate([...idValidationRule, ...statusValidationRules]), submissionController.updateEntityStatus);
+
+// Update submission - manager and admin only (NOT viewer or user)
+router.put("/:id", authorize("manager", "admin"), validate([...idValidationRule, ...updateValidationRules]), submissionController.updateEntity);
+
+// Delete submission - admin only (NOT viewer, user, or manager)
+router.delete("/:id", authorize("admin"), validate(idValidationRule), submissionController.deleteEntity);
+
+// Update submission status - manager and admin only (NOT viewer or user)
+router.patch("/:id/status", authorize("manager", "admin"), validate([...idValidationRule, ...statusValidationRules]), submissionController.updateEntityStatus);
 
 module.exports = router;
