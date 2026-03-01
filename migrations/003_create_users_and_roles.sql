@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS roles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
@@ -23,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_role_id (role_id)
 );
 
--- Create refresh tokens table
+
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -36,7 +35,6 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     INDEX idx_expires_at (expires_at)
 );
 
--- Insert default roles
 INSERT INTO roles (name, description) VALUES
 ('admin', 'Full system access with all permissions'),
 ('manager', 'Can manage submissions and view reports'),

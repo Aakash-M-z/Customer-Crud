@@ -6,7 +6,12 @@ let pool;
 
 try {
     if (envConfig.databaseUrl) {
-        pool = mysql.createPool(envConfig.databaseUrl);
+        const separator = envConfig.databaseUrl.includes("?") ? "&" : "?";
+        const dbUrl = envConfig.databaseUrl.includes("multipleStatements=true")
+            ? envConfig.databaseUrl
+            : `${envConfig.databaseUrl}${separator}multipleStatements=true`;
+
+        pool = mysql.createPool(dbUrl);
     } else {
         pool = mysql.createPool(envConfig.dbConfig);
     }

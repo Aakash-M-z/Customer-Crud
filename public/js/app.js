@@ -4,10 +4,13 @@ let deleteModal;
 let customerToDelete = null;
 
 $(document).ready(function () {
+  if (!checkAuth()) return;
+
   load();
   createToastContainer();
   deleteModal = new bootstrap.Modal(document.getElementById("deleteModal"));
   applyFrontendPermissions();
+  displayUserInfo();
 
   $("#confirmDeleteBtn").on("click", function () {
     if (customerToDelete) {
@@ -19,6 +22,42 @@ $(document).ready(function () {
     $(this).removeClass("is-invalid is-valid");
   });
 });
+
+// Logout function
+window.logout = function () {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+  window.location.href = '/login.html';
+};
+
+// Display user info in header
+function displayUserInfo() {
+  const userString = localStorage.getItem('user');
+  if (!userString) return;
+
+  const user = JSON.parse(userString);
+  const badgeContainer = document.getElementById('userBadge');
+  if (badgeContainer && user.username) {
+    const roleName = user.role_name || user.role || 'User';
+    badgeContainer.innerHTML = `
+      <span class="badge bg-light text-dark ms-3 border" style="font-size: 0.9rem; font-weight: 500;">
+        <i class="fas fa-user-circle me-1 text-primary"></i>
+        ${user.username} <small class="text-muted">(${roleName})</small>
+      </span>
+    `;
+  }
+}
+
+// Check if user is authenticated
+function checkAuth() {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    window.location.href = '/login.html';
+    return false;
+  }
+  return true;
+}
 
 // Fetch with authentication
 async function fetchWithAuth(url, options = {}) {
@@ -44,10 +83,7 @@ async function fetchWithAuth(url, options = {}) {
 // Apply permissions for UI elements
 function applyFrontendPermissions() {
   const userString = localStorage.getItem('user');
-  if (!userString) {
-    window.location.href = '/login.html';
-    return;
-  }
+  if (!userString) return;
 
   const user = JSON.parse(userString);
   const role = (user.role_name || user.role || '').toLowerCase();
