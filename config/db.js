@@ -1,13 +1,22 @@
 const mysql = require("mysql2/promise");
+require("dotenv").config();
 
-console.log("Database config init for Railway");
+let pool;
 
-const pool = mysql.createPool({
-    uri: process.env.DATABASE_URL,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    multipleStatements: true
-});
+if (process.env.DATABASE_URL) {
+    pool = mysql.createPool(process.env.DATABASE_URL);
+} else {
+    pool = mysql.createPool({
+        host: "localhost",
+        user: "root",
+        password: "Aakash@420",
+        database: "customer_db",
+        port: 3306,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        multipleStatements: true
+    });
+}
 
 module.exports = pool;
