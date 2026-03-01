@@ -11,12 +11,127 @@ let submissionModal;
 let viewModal;
 let deleteModal;
 
+// Check authentication on page load
+function checkAuth() {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+        window.location.href = '/login.html';
+        return false;
+    }
+    return true;
+}
+
+// Logout function
+window.logout = function () {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    window.location.href = '/login.html';
+};
+
+// Fetch with authentication
+async function fetchWithAuth(url, options = {}) {
+    const token = localStorage.getItem('accessToken');
+
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    // If token expired, try to refresh
+    if (response.status === 401) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+            // Retry the request with new token
+            const newToken = localStorage.getItem('accessToken');
+            return fetch(url, {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Authorization': `Bearer ${newToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+        } else {
+            // Redirect to login
+            logout();
+            return response;
+        }
+    }
+
+    return response;
+}
+
+// Refresh access token
+async function refreshAccessToken() {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return false;
+
+    try {
+        const response = await fetch('/api/auth/refresh-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('accessToken', data.data.accessToken);
+            return true;
+        }
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+    }
+
+    return false;
+}
+
 // Initialize on DOM Load
 document.addEventListener('DOMContentLoaded', () => {
+    if (!checkAuth()) return;
+
     initializeModals();
     setupEventListeners();
     loadSubmissions();
+    displayUserInfo();
+    applyFrontendPermissions();
 });
+
+// Apply permissions for UI elements
+function applyFrontendPermissions() {
+    const userString = localStorage.getItem('user');
+    if (!userString) return;
+
+    const user = JSON.parse(userString);
+    const role = (user.role_name || user.role || '').toLowerCase();
+
+    // Hide "New Submission" button if viewer
+    if (role === 'viewer') {
+        const newBtn = document.querySelector('button[onclick="openSubmissionModal()"]');
+        if (newBtn) newBtn.style.display = 'none';
+
+        const emptyStateBtn = document.querySelector('.empty-state button');
+        if (emptyStateBtn) emptyStateBtn.style.display = 'none';
+    }
+}
+
+// Display user info in header
+function displayUserInfo() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.username) {
+        const headerTitle = document.querySelector('.header-title');
+        if (headerTitle) {
+            const userBadge = document.createElement('span');
+            userBadge.className = 'badge bg-light text-dark ms-3';
+            userBadge.innerHTML = `<i class="fas fa-user me-1"></i>${user.username} (${user.role_name})`;
+            headerTitle.appendChild(userBadge);
+        }
+    }
+}
 
 // Initialize Bootstrap Modals
 function initializeModals() {
@@ -50,7 +165,7 @@ async function loadSubmissions() {
     showLoading(true);
 
     try {
-        const response = await fetch(API_BASE_URL);
+        const response = await fetchWithAuth(API_BASE_URL);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -87,26 +202,36 @@ function renderSubmissions() {
     tableContainer.style.display = 'block';
     emptyState.style.display = 'none';
 
-    tbody.innerHTML = filteredSubmissions.map(submission => `
-    <tr>
-      <td><strong>#${submission.id}</strong></td>
-      <td>${escapeHtml(submission.title)}</td>
-      <td>${escapeHtml(submission.submitter_email)}</td>
-      <td>${renderStatusBadge(submission.status)}</td>
-      <td>${formatDate(submission.created_at)}</td>
-      <td>
-        <button class="action-btn view" onclick="viewSubmission(${submission.id})">
-          <i class="fas fa-eye"></i> View
-        </button>
-        <button class="action-btn edit" onclick="editSubmission(${submission.id})">
-          <i class="fas fa-edit"></i> Edit
-        </button>
-        <button class="action-btn delete" onclick="deleteSubmission(${submission.id})">
-          <i class="fas fa-trash"></i> Delete
-        </button>
-      </td>
-    </tr>
-  `).join('');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const role = (user.role_name || user.role || '').toLowerCase();
+
+    tbody.innerHTML = filteredSubmissions.map(submission => {
+        const canEdit = ['admin', 'manager'].includes(role);
+        const canDelete = role === 'admin';
+
+        return `
+            <tr>
+              <td><strong>#${submission.id}</strong></td>
+              <td>${escapeHtml(submission.title)}</td>
+              <td>${escapeHtml(submission.submitter_email)}</td>
+              <td>${renderStatusBadge(submission.status)}</td>
+              <td>${formatDate(submission.created_at)}</td>
+              <td>
+                <button class="action-btn view" onclick="viewSubmission(${submission.id})">
+                  <i class="fas fa-eye"></i> View
+                </button>
+                ${canEdit ? `
+                <button class="action-btn edit" onclick="editSubmission(${submission.id})">
+                  <i class="fas fa-edit"></i> Edit
+                </button>` : ''}
+                ${canDelete ? `
+                <button class="action-btn delete" onclick="deleteSubmission(${submission.id})">
+                  <i class="fas fa-trash"></i> Delete
+                </button>` : ''}
+              </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // Render Status Badge
@@ -229,11 +354,8 @@ window.saveSubmission = async function () {
         const url = id ? `${API_BASE_URL}/${id}` : API_BASE_URL;
         const method = id ? 'PUT' : 'POST';
 
-        const response = await fetch(url, {
+        const response = await fetchWithAuth(url, {
             method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify(data)
         });
 
@@ -243,6 +365,9 @@ window.saveSubmission = async function () {
             if (response.status === 422) {
                 handleValidationErrors(result.errors);
                 throw new Error('Validation failed');
+            }
+            if (response.status === 403) {
+                throw new Error('You do not have permission to perform this action');
             }
             throw new Error(result.message || 'Failed to save submission');
         }
@@ -379,12 +504,16 @@ async function confirmDelete() {
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/${currentSubmissionId}`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/${currentSubmissionId}`, {
             method: 'DELETE'
         });
 
         if (!response.ok) {
-            throw new Error('Failed to delete submission');
+            const result = await response.json();
+            if (response.status === 403) {
+                throw new Error('You do not have permission to delete submissions');
+            }
+            throw new Error(result.message || 'Failed to delete submission');
         }
 
         deleteModal.hide();
@@ -393,7 +522,7 @@ async function confirmDelete() {
 
     } catch (error) {
         console.error('Error deleting submission:', error);
-        showToast('error', 'Error', 'Failed to delete submission');
+        showToast('error', 'Error', error.message || 'Failed to delete submission');
     } finally {
         confirmBtn.disabled = false;
         confirmBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete';

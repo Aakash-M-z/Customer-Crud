@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      max-width: 400px;
+      width: 100%;
+    }
+    .login-header {
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    .login-header i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .login-body {
+      padding: 2rem;
+    }
+    .form-control {
+      border-radius: 10px;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+    }
+    .form-control:focus {
+      border-color: #000000;
+      box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1);
+    }
+    .btn-login {
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: 600;
+      width: 100%;
+      transition: transform 0.2s;
+    }
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    .alert {
+      border-radius: 10px;
+    }
+    .alert-success {
+      background-color: #d1fae5;
+      border-color: #10b981;
+      color: #065f46;
+    }
+    .demo-accounts {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-top: 0.5rem;
+    }
+    .demo-accounts small {
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <i class="fas fa-shield-alt"></i>
+      <h2 class="mb-0">Admin Login</h2>
+      <p class="mb-0 mt-2">Sign in to continue</p>
+    </div>
+    <div class="login-body">
+      <div id="errorAlert" class="alert alert-danger d-none" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span id="errorMessage"></span>
+      </div>
+      
+      <form id="loginForm">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Email Address</label>
+          <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-bold">Password</label>
+          <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+        </div>
+        
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="rememberMe">
+          <label class="form-check-label" for="rememberMe">Remember me</label>
+        </div>
+        
+        <button type="submit" class="btn btn-login" id="loginBtn">
+          <i class="fas fa-sign-in-alt me-2"></i>Sign In
+        </button>
+      </form>
+      
+      <div class="mt-3 text-center">
+        <small class="text-muted d-block mb-2"><strong>Demo Accounts:</strong></small>
+        <div class="demo-accounts">
+          <small class="text-muted d-block">👑 Admin: admin@example.com / Admin@123</small>
+          <small class="text-muted d-block">👔 Manager: manager@example.com / Manager@123</small>
+          <small class="text-muted d-block">👤 User: user@example.com / User@123</small>
+          <small class="text-muted d-block">👁️ Viewer: viewer@example.com / Viewer@123</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      // Disable button and show loading
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
+      errorAlert.classList.add('d-none');
+      
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          // Store tokens
+          localStorage.setItem('accessToken', data.data.accessToken);
+          localStorage.setItem('refreshToken', data.data.refreshToken);
+          localStorage.setItem('user', JSON.stringify(data.data.user));
+          
+          // Show success message briefly
+          errorAlert.classList.remove('d-none');
+          errorAlert.classList.remove('alert-danger');
+          errorAlert.classList.add('alert-success');
+          errorMessage.innerHTML = '<i class="fas fa-check-circle me-2"></i>Login successful! Redirecting...';
+          
+          // Redirect to submissions page
+          setTimeout(() => {
+            window.location.href = '/submissions.html';
+          }, 500);
+        } else {
+          // Show error
+          errorAlert.classList.remove('alert-success');
+          errorAlert.classList.add('alert-danger');
+          errorMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + (data.message || 'Login failed. Please check your credentials.');
+          errorAlert.classList.remove('d-none');
+          
+          // Reset button
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Sign In';
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        errorAlert.classList.remove('alert-success');
+        errorAlert.classList.add('alert-danger');
+        errorMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>Network error. Please check your connection and try again.';
+        errorAlert.classList.remove('d-none');
+        
+        // Reset button
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

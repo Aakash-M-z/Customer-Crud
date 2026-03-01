@@ -2,6 +2,7 @@ const express = require("express");
 const { body, param } = require("express-validator");
 const { validate } = require("../../middlewares/validationMiddleware");
 const customerController = require("./customer.controller");
+const { authenticate, authorize } = require("../../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -25,10 +26,22 @@ const idValidationRule = [
     param("id").isInt().withMessage("ID must be an integer")
 ];
 
-router.post("/", validate(customerValidationRules), customerController.createCustomer);
+// All routes require authentication
+router.use(authenticate);
+
+// Create customer - user, manager, admin (NOT viewer)
+router.post("/", authorize("user", "manager", "admin"), validate(customerValidationRules), customerController.createCustomer);
+
+// Get all customers - all authenticated users can view
 router.get("/", customerController.getAllCustomers);
+
+// Get customer by ID - all authenticated users can view
 router.get("/:id", validate(idValidationRule), customerController.getCustomerById);
-router.put("/:id", validate([...idValidationRule, ...updateValidationRules]), customerController.updateCustomer);
-router.delete("/:id", validate(idValidationRule), customerController.deleteCustomer);
+
+// Update customer - manager and admin only (NOT viewer or user)
+router.put("/:id", authorize("manager", "admin"), validate([...idValidationRule, ...updateValidationRules]), customerController.updateCustomer);
+
+// Delete customer - admin only (NOT viewer, user, or manager)
+router.delete("/:id", authorize("admin"), validate(idValidationRule), customerController.deleteCustomer);
 
 module.exports = router;

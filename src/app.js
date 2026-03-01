@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const { errorHandler } = require("./middlewares/errorMiddleware");
 const submissionRoutes = require("./modules/submissions/submission.routes");
 const customerRoutes = require("./modules/customers/customer.routes");
+const authRoutes = require("./modules/auth/auth.routes");
 const logger = require("./utils/logger");
 
 const app = express();
@@ -25,11 +26,14 @@ app.get("/health", (req, res) => {
 });
 
 // API Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/customers", customerRoutes);
 
+const { authenticate } = require("./middlewares/authMiddleware");
+
 // Legacy route for DataTables compatibility
-app.get("/getCustomers", async (req, res, next) => {
+app.get("/getCustomers", authenticate, async (req, res, next) => {
     try {
         const customerService = require("./modules/customers/customer.service");
         const customers = await customerService.getAllCustomers();

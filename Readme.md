@@ -60,3 +60,9 @@ MySQL database connectivity
 Handling HTTP requests
 
 Integrating frontend with backend
+
+demo accounts:
+│ admin     │ admin@example.com      │ Admin@123     │
+│ manager   │ manager@example.com    │ Manager@123   │
+│ user      │ user@example.com       │ User@123      │
+│ viewer    │ viewer@example.com     │ Viewer@123    |
