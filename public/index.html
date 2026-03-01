@@ -10,6 +10,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/navigation.css">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Immediate redirect if not authenticated
+    if (!localStorage.getItem('accessToken')) {
+      window.location.href = '/login.html';
+    }
+  </script>
 </head>
 <body>
 
@@ -46,10 +52,19 @@
   <div class="card shadow-lg">
     <div class="card-header">
       <div class="d-flex justify-content-between align-items-center">
-        <h1 class="mb-0 header-title"><img src="group.png" alt="Customer Icon" class="header-icon me-2">Customer Management</h1>
-        <button class="btn btn-primary rounded-pill px-4" id="addCustomerBtn" onclick="openForm()">
-          <i class="fas fa-plus me-2"></i>Add Customer
-        </button>
+        <h1 class="mb-0 header-title">
+          <img src="group.png" alt="Customer Icon" class="header-icon me-2">
+          Customer Management
+          <span id="userBadge"></span>
+        </h1>
+        <div>
+          <button class="btn btn-primary rounded-pill px-4 me-2" id="addCustomerBtn" onclick="openForm()">
+            <i class="fas fa-plus me-2"></i>Add Customer
+          </button>
+          <button class="btn btn-outline-light rounded-pill px-4" onclick="logout()">
+            <i class="fas fa-sign-out-alt me-2"></i>Logout
+          </button>
+        </div>
       </div>
     </div>
     <div class="card-body">
