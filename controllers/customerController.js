@@ -3,7 +3,7 @@ const { validationResult } = require("express-validator");
 
 exports.getAllCustomers = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT * FROM customers ORDER BY created_at ASC");
+        const [rows] = await pool.query("SELECT * FROM customers ORDER BY id ASC");
         res.json(rows);
     } catch (err) {
         console.error(err);
@@ -13,7 +13,7 @@ exports.getAllCustomers = async (req, res) => {
 
 exports.getCustomersForDataTable = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT * FROM customers ORDER BY created_at ASC");
+        const [rows] = await pool.query("SELECT * FROM customers ORDER BY id ASC");
         res.json({ data: rows });
     } catch (err) {
         console.error(err);
