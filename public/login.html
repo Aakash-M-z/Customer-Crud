@@ -121,10 +121,10 @@
       <div class="mt-3 text-center">
         <small class="text-muted d-block mb-2"><strong>Demo Accounts:</strong></small>
         <div class="demo-accounts">
-          <small class="text-muted d-block">👑 Admin: admin@example.com / Admin@123</small>
-          <small class="text-muted d-block">👔 Manager: manager@example.com / Manager@123</small>
-          <small class="text-muted d-block">👤 User: user@example.com / User@123</small>
-          <small class="text-muted d-block">👁️ Viewer: viewer@example.com / Viewer@123</small>
+          <small class="text-muted d-block"> Admin: admin@example.com / Admin@123</small>
+          <small class="text-muted d-block"> Manager: manager@example.com / Manager@123</small>
+          <small class="text-muted d-block"> User: user@example.com / User@123</small>
+          <small class="text-muted d-block"> Viewer: viewer@example.com / Viewer@123</small>
         </div>
       </div>
     </div>
@@ -179,7 +179,8 @@
           // Show error
           errorAlert.classList.remove('alert-success');
           errorAlert.classList.add('alert-danger');
-          errorMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + (data.message || 'Login failed. Please check your credentials.');
+          const errMsg = data.error?.message || data.message || 'Login failed. Please check your credentials.';
+          errorMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + errMsg;
           errorAlert.classList.remove('d-none');
           
           // Reset button
