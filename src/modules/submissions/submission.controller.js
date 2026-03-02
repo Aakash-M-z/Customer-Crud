@@ -3,7 +3,7 @@ const submissionService = require("./submission.service");
 class SubmissionController {
     createEntity = async (req, res, next) => {
         try {
-            const submission = await submissionService.createSubmission(req.body);
+            const submission = await submissionService.createSubmission(req.body, req.user);
             res.status(201).json({
                 success: true,
                 message: "Submission created successfully",
@@ -40,7 +40,7 @@ class SubmissionController {
 
     updateEntity = async (req, res, next) => {
         try {
-            const submission = await submissionService.updateSubmission(req.params.id, req.body);
+            const submission = await submissionService.updateSubmission(req.params.id, req.body, req.user);
             res.status(200).json({
                 success: true,
                 message: "Submission updated successfully",
@@ -53,7 +53,7 @@ class SubmissionController {
 
     deleteEntity = async (req, res, next) => {
         try {
-            await submissionService.deleteSubmission(req.params.id);
+            await submissionService.deleteSubmission(req.params.id, req.user);
             res.status(200).json({
                 success: true,
                 message: "Submission deleted successfully",
@@ -66,7 +66,7 @@ class SubmissionController {
     updateEntityStatus = async (req, res, next) => {
         try {
             const { status } = req.body;
-            const submission = await submissionService.updateSubmissionStatus(req.params.id, status);
+            const submission = await submissionService.updateSubmissionStatus(req.params.id, status, req.user);
             res.status(200).json({
                 success: true,
                 message: "Submission status updated successfully",
