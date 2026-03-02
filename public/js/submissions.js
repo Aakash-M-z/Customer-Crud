@@ -237,26 +237,28 @@ function renderSubmissions() {
 // Render Status Badge
 function renderStatusBadge(status) {
     const icons = {
-        pending: 'fa-clock',
-        in_progress: 'fa-spinner',
-        approved: 'fa-check-circle',
-        rejected: 'fa-times-circle'
+        'New': 'fa-clock',
+        'In Review': 'fa-spinner',
+        'Approved': 'fa-check-circle',
+        'Rejected': 'fa-times-circle'
     };
 
-    const displayStatus = status.replace('_', ' ');
-    return `<span class="status-badge ${status}">
+    // Convert status to a CSS-friendly class (e.g., "In Review" -> "in-review")
+    const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+
+    return `<span class="status-badge ${statusClass}">
     <i class="fas ${icons[status] || 'fa-circle'}"></i>
-    ${displayStatus}
+    ${status}
   </span>`;
 }
 
 // Update Statistics
 function updateStats() {
     const stats = {
-        pending: 0,
-        in_progress: 0,
-        approved: 0,
-        rejected: 0
+        'New': 0,
+        'In Review': 0,
+        'Approved': 0,
+        'Rejected': 0
     };
 
     submissions.forEach(submission => {
@@ -265,10 +267,10 @@ function updateStats() {
         }
     });
 
-    document.getElementById('statPending').textContent = stats.pending;
-    document.getElementById('statInProgress').textContent = stats.in_progress;
-    document.getElementById('statApproved').textContent = stats.approved;
-    document.getElementById('statRejected').textContent = stats.rejected;
+    document.getElementById('statPending').textContent = stats['New'];
+    document.getElementById('statInProgress').textContent = stats['In Review'];
+    document.getElementById('statApproved').textContent = stats['Approved'];
+    document.getElementById('statRejected').textContent = stats['Rejected'];
 }
 
 // Apply Filters

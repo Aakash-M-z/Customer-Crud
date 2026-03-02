@@ -165,13 +165,13 @@ body {
     border: 2px solid;
 }
 
-.status-badge.pending {
+.status-badge.new {
     background: white;
     color: #4a4a4a;
     border-color: #4a4a4a;
 }
 
-.status-badge.in_progress {
+.status-badge.in-review {
     background: #2d2d2d;
     color: white;
     border-color: #2d2d2d;
