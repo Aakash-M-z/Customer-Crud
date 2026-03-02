@@ -8,10 +8,11 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQY2BgEBMANQByD/4f/D/4P7AwMEiBgQH7BPyL/hf9D/4P/D/4PzAIAQAAb/sM/r7r+AAAAABJRU5ErkJggg==">
   <link rel="stylesheet" href="css/navigation.css">
   <link rel="stylesheet" href="css/style.css">
   <script>
-    // Immediate redirect if not authenticated
+
     if (!localStorage.getItem('accessToken')) {
       window.location.href = '/login.html';
     }
@@ -19,7 +20,6 @@
 </head>
 <body>
 
-<!-- Navigation Bar -->
 <nav class="navbar navbar-expand-lg admin-navbar">
   <div class="container-fluid px-4">
     <a class="navbar-brand" href="/">
