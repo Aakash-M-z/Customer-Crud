@@ -50,4 +50,8 @@ router.delete("/:id", authorize("admin"), validate(idValidationRule), submission
 // Specific transition rules (New -> In Review for managers, In Review -> Approved/Rejected for admins) in Service
 router.patch("/:id/status", authorize("manager", "admin"), validate([...idValidationRule, ...statusValidationRules]), submissionController.updateEntityStatus);
 
+// Get submission status history - all authenticated roles except viewer
+// Logic for ownership check (customers can only see their own) in Service
+router.get("/:id/history", authorize("user", "manager", "admin"), validate(idValidationRule), submissionController.getEntityHistory);
+
 module.exports = router;
