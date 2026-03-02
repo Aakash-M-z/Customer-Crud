@@ -3,8 +3,11 @@ const modal = new bootstrap.Modal(document.getElementById("modal"));
 let deleteModal;
 let customerToDelete = null;
 
-$(document).ready(function () {
+$(document).ready(async function () {
   if (!checkAuth()) return;
+
+  // Set up global AJAX handling for jQuery
+  setupGlobalAjax();
 
   load();
   createToastContainer();
@@ -22,6 +25,38 @@ $(document).ready(function () {
     $(this).removeClass("is-invalid is-valid");
   });
 });
+
+// Set up global jQuery AJAX configuration
+function setupGlobalAjax() {
+  $.ajaxSetup({
+    beforeSend: function (xhr) {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+    }
+  });
+
+  // Handle errors globally
+  $(document).ajaxError(async function (event, jqXHR, ajaxSettings, thrownError) {
+    // If it's a 401 and we haven't tried refreshing yet for this request
+    if (jqXHR.status === 401 && !ajaxSettings._isRetry) {
+      ajaxSettings._isRetry = true;
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        // Retry the original request with the new token
+        $.ajax(ajaxSettings);
+
+        // If it was a DataTable load, reload the table too
+        if (ajaxSettings.url === "/getCustomers" && table) {
+          table.ajax.reload(null, false);
+        }
+      } else {
+        logout();
+      }
+    }
+  });
+}
 
 // Logout function
 window.logout = function () {
@@ -41,9 +76,9 @@ function displayUserInfo() {
   if (badgeContainer && user.username) {
     const roleName = user.role_name || user.role || 'User';
     badgeContainer.innerHTML = `
-      <span class="badge bg-light text-dark ms-3 border" style="font-size: 0.9rem; font-weight: 500;">
-        <i class="fas fa-user-circle me-1 text-primary"></i>
-        ${user.username} <small class="text-muted">(${roleName})</small>
+      <span class="user-badge ms-3">
+        <i class="fas fa-user-circle me-1"></i>
+        ${user.username} <span class="role-text">(${roleName})</span>
       </span>
     `;
   }
@@ -59,6 +94,30 @@ function checkAuth() {
   return true;
 }
 
+// Refresh access token
+async function refreshAccessToken() {
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) return false;
+
+  try {
+    const response = await fetch('/api/auth/refresh-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('accessToken', data.data.accessToken);
+      return true;
+    }
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+  }
+
+  return false;
+}
+
 // Fetch with authentication
 async function fetchWithAuth(url, options = {}) {
   const token = localStorage.getItem('accessToken');
@@ -72,9 +131,22 @@ async function fetchWithAuth(url, options = {}) {
   });
 
   if (response.status === 401) {
-    localStorage.clear();
-    window.location.href = '/login.html';
-    return response;
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      const newToken = localStorage.getItem('accessToken');
+      return fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    } else {
+      localStorage.clear();
+      window.location.href = '/login.html';
+      return response;
+    }
   }
 
   return response;
@@ -134,11 +206,8 @@ function load() {
   table = $("#table").DataTable({
     ajax: {
       url: "/getCustomers",
-      dataSrc: "data",
-      beforeSend: function (xhr) {
-        const token = localStorage.getItem('accessToken');
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
+      dataSrc: "data"
+      // Auth is now handled globally by setupGlobalAjax
     },
     order: [[1, 'asc']],
     autoWidth: false,
@@ -175,16 +244,16 @@ function load() {
           const canDelete = role === 'admin';
 
           return `
-            <button class='btn btn-sm btn-success rounded-pill me-2' onclick='view(${data.id})'>
-              <i class='fas fa-eye me-1'></i>View
+            <button class='action-btn view me-2' onclick='view(${data.id})'>
+              <i class='fas fa-eye'></i>
             </button>
             ${canEdit ? `
-            <button class='btn btn-sm btn-info rounded-pill me-2' onclick='edit(${data.id})'>
-              <i class='fas fa-edit me-1'></i>Edit
+            <button class='action-btn edit me-2' onclick='edit(${data.id})'>
+              <i class='fas fa-edit'></i>
             </button>` : ''}
             ${canDelete ? `
-            <button class='btn btn-sm btn-danger rounded-pill' onclick='removeCustomer(${data.id})'>
-              <i class='fas fa-trash me-1'></i>Delete
+            <button class='action-btn delete' onclick='removeCustomer(${data.id})'>
+              <i class='fas fa-trash'></i>
             </button>` : ''}
           `;
         }
