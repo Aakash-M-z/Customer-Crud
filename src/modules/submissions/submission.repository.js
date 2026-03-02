@@ -5,9 +5,9 @@ class SubmissionRepository {
         const { title, description, submitter_email, status } = submission;
         const [result] = await pool.query(
             "INSERT INTO submissions (title, description, submitter_email, status) VALUES (?, ?, ?, ?)",
-            [title, description, submitter_email, status || "pending"]
+            [title, description, submitter_email, status || "New"]
         );
-        return { id: result.insertId, ...submission, status: status || "pending" };
+        return { id: result.insertId, ...submission, status: status || "New", lock_flag: 0 };
     }
 
     async findAll() {
