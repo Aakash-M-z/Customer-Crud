@@ -126,8 +126,8 @@ function displayUserInfo() {
         const headerTitle = document.querySelector('.header-title');
         if (headerTitle) {
             const userBadge = document.createElement('span');
-            userBadge.className = 'badge bg-light text-dark ms-3';
-            userBadge.innerHTML = `<i class="fas fa-user me-1"></i>${user.username} (${user.role_name})`;
+            userBadge.className = 'user-badge ms-3';
+            userBadge.innerHTML = `<i class="fas fa-user-circle me-1"></i>${user.username} <span class="role-text">(${user.role_name})</span>`;
             headerTitle.appendChild(userBadge);
         }
     }

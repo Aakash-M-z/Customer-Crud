@@ -76,6 +76,18 @@ class SubmissionController {
             next(error);
         }
     };
+
+    getEntityHistory = async (req, res, next) => {
+        try {
+            const history = await submissionService.getSubmissionHistory(req.params.id, req.user);
+            res.status(200).json({
+                success: true,
+                data: history,
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
 }
 
 module.exports = new SubmissionController();

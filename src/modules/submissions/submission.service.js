@@ -1,4 +1,5 @@
 const submissionRepository = require("./submission.repository");
+const submissionHistoryRepository = require("./submissionHistory.repository");
 const { AppError } = require("../../middlewares/errorMiddleware");
 
 class SubmissionService {
@@ -107,6 +108,11 @@ class SubmissionService {
             return existingSubmission;
         }
 
+        // Rule: Locked submissions cannot have their status changed
+        if (existingSubmission.lock_flag) {
+            throw new AppError("Submission is locked and its status cannot be changed", 403);
+        }
+
         // Use the common validation helper
         await this.validateStatusTransition(currentStatus, newStatus, user);
 
@@ -118,7 +124,31 @@ class SubmissionService {
         }
 
         const updatedSubmission = await submissionRepository.update(id, updateData);
+
+        // Record history after successful transition
+        if (updatedSubmission) {
+            await submissionHistoryRepository.createHistory({
+                submission_id: id,
+                old_status: currentStatus,
+                new_status: newStatus,
+                changed_by: user.id
+            });
+        }
+
         return updatedSubmission;
+    }
+
+    async getSubmissionHistory(id, user) {
+        const submission = await this.getSubmissionById(id);
+
+        // Access rules:
+        // - Admin and Manager (Moderator in user's prompt) can see all
+        // - Customers (user role) can only see their own
+        if (user.role === 'user' && submission.submitter_email !== user.email) {
+            throw new AppError("Access denied. You can only view history for your own submissions", 403);
+        }
+
+        return await submissionHistoryRepository.findBySubmissionId(id);
     }
 }
 
