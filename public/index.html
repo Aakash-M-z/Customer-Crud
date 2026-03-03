@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Customer Management - Admin Dashboard</title>
+  <title>Customer Management - Dashboard</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Customer Management CRUD Application - Add, View, Edit and Delete customer records">
@@ -27,7 +27,7 @@
   <div class="container-fluid px-4">
     <a class="navbar-brand" href="/">
       <i class="fas fa-shield-alt"></i>
-      Admin Dashboard
+      Dashboard
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -51,12 +51,12 @@
   </div>
 </nav>
 
-<div class="container-fluid p-0">
-  <div class="card shadow-lg">
-    <div class="card-header">
+<div class="container-fluid p-0 main-content">
+  <div class="dashboard-card">
+    <div class="dashboard-header">
       <div class="d-flex justify-content-between align-items-center">
         <h1 class="mb-0 header-title">
-          <img src="group.png" alt="Customer Icon" class="header-icon me-2">
+          <i class="fas fa-users me-2"></i>
           Customer Management
           <span id="userBadge"></span>
         </h1>
@@ -70,7 +70,75 @@
         </div>
       </div>
     </div>
-    <div class="card-body">
+    <div class="dashboard-body">
+      <!-- Segment 1: Stats Cards -->
+      <div class="row mb-4" id="statsCards">
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon total">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statTotal">0</h3>
+              <p>Total Customers</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon today">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statToday">0</h3>
+              <p>New Today</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon active">
+              <i class="fas fa-check-double"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statActive">0</h3>
+              <p>Active</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card">
+            <div class="stat-icon recent">
+              <i class="fas fa-history"></i>
+            </div>
+            <div class="stat-content">
+              <h3 id="statRecent">0</h3>
+              <p>Recent Actions</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segment 2: Filters -->
+      <div class="filters-section mb-4">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="fas fa-search text-muted"></i>
+              </span>
+              <input type="text" class="form-control border-start-0 ps-0" id="customerSearch" placeholder="Quick search customers...">
+            </div>
+          </div>
+          <div class="col-md-8 text-end">
+            <button class="btn btn-outline-secondary px-3" onclick="refreshData()">
+              <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segment 3: Table -->
       <div class="table-container">
         <div class="table-responsive">
           <table id="table" class="table table-hover align-middle"></table>

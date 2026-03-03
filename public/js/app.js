@@ -212,6 +212,7 @@ function load() {
     order: [[1, 'asc']],
     autoWidth: false,
     responsive: true,
+    dom: '<"top"rt><"bottom"ip><"clear">', // Hide default search and length
     columns: [
       {
         data: "id",
@@ -259,12 +260,44 @@ function load() {
         }
       }
     ],
-    drawCallback: function () {
+    drawCallback: function (settings) {
+      // Update stats based on the data
+      updateStats(settings.aoData.map(d => d._aData));
+
       this.api().column(0, { order: 'applied' }).nodes().each(function (cell, i) {
         cell.innerHTML = i + 1;
       });
     }
   });
+
+  // Custom search logic
+  $("#customerSearch").on("keyup", function () {
+    table.search($(this).val()).draw();
+  });
+}
+
+function updateStats(data) {
+  if (!data) return;
+
+  const total = data.length;
+  const today = data.filter(c => {
+    if (!c.created_at) return false;
+    const d = new Date(c.created_at);
+    const now = new Date();
+    return d.toDateString() === now.toDateString();
+  }).length;
+
+  // Simple "Active" logic (everyone for now)
+  const active = total;
+
+  $("#statTotal").text(total);
+  $("#statToday").text(today);
+  $("#statActive").text(active);
+  $("#statRecent").text(Math.floor(total * 0.2)); // Just a placeholder for demo
+}
+
+function refreshData() {
+  if (table) table.ajax.reload();
 }
 
 function openForm() {
